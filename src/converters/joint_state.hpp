@@ -30,6 +30,7 @@
 */
 #include <urdf/model.h>
 #include <sensor_msgs/JointState.h>
+#include <tf2_ros/buffer.h>
 #include <robot_state_publisher/robot_state_publisher.h>
 
 namespace naoqi
@@ -44,7 +45,7 @@ class JointStateConverter : public BaseConverter<JointStateConverter>
 
   typedef boost::shared_ptr<tf2_ros::Buffer> BufferPtr;
 
-  typedef std::map<std::string, boost::shared_ptr<urdf::JointMimic> > MimicMap;
+  typedef std::map<std::string, urdf::JointMimicSharedPtr> MimicMap;
 
 public:
   JointStateConverter( const std::string& name, const float& frequency, const BufferPtr& tf2_buffer, const qi::SessionPtr& session );
@@ -70,6 +71,7 @@ private:
 
   /** Motion Proxy **/
   qi::AnyObject p_motion_;
+  qi::AnyObject p_memory_;
 
   /** Registered Callbacks **/
   std::map<message_actions::MessageAction, Callback_t> callbacks_;

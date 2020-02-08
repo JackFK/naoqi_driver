@@ -42,19 +42,29 @@ static naoqi_bridge_msgs::RobotInfo& getRobotInfoLocal( const qi::SessionPtr& se
   std::cout << "Receiving information about robot model" << std::endl;
   qi::AnyObject p_memory = session->service("ALMemory");
   std::string robot = p_memory.call<std::string>("getData", "RobotConfig/Body/Type" );
+  std::string version = p_memory.call<std::string>("getData", "RobotConfig/Body/BaseVersion" );
   std::transform(robot.begin(), robot.end(), robot.begin(), ::tolower);
 
   if (std::string(robot) == "nao")
   {
     info.type = naoqi_bridge_msgs::RobotInfo::NAO;
+    std::cout << BOLDYELLOW << "Robot detected: "
+              << BOLDCYAN << "NAO " << version
+              << RESETCOLOR << std::endl;
   }
   if (std::string(robot) == "pepper" || std::string(robot) == "juliette" )
   {
     info.type = naoqi_bridge_msgs::RobotInfo::PEPPER;
+    std::cout << BOLDYELLOW << "Robot detected: "
+              << BOLDCYAN << "Pepper " << version
+              << RESETCOLOR << std::endl;
   }
   if (std::string(robot) == "romeo" )
   {
     info.type = naoqi_bridge_msgs::RobotInfo::ROMEO;
+    std::cout << BOLDYELLOW << "Robot detected: "
+              << BOLDCYAN << "Romeo " << version
+              << RESETCOLOR << std::endl;
   }
 
   // Get the data from RobotConfig
@@ -192,6 +202,61 @@ const naoqi_bridge_msgs::RobotInfo& getRobotInfo( const qi::SessionPtr& session 
 {
   static naoqi_bridge_msgs::RobotInfo robot_info =  getRobotInfoLocal(session);
   return robot_info;
+}
+
+/** Function that sets language for a robot
+ */
+bool& setLanguage( const qi::SessionPtr& session, naoqi_bridge_msgs::SetStringRequest req)
+{
+  static bool success;
+  std::cout << "Receiving service call of setting speech language" << std::endl;
+  try{
+    qi::AnyObject p_text_to_speech = session->service("ALTextToSpeech");
+    p_text_to_speech.call<void>("setLanguage", req.data);
+    success = true;
+    return success;
+  }
+  catch(const std::exception& e){
+    success = false;
+    return success;
+  }
+}
+
+/** Function that gets language set to a robot
+ */
+std::string& getLanguage( const qi::SessionPtr& session )
+{
+  static std::string language;
+  std::cout << "Receiving service call of getting speech language" << std::endl;
+  qi::AnyObject p_text_to_speech = session->service("ALTextToSpeech");
+  language = p_text_to_speech.call<std::string>("getLanguage");
+  return language;
+}
+
+/**
+ * Function that detects if the robot is using stereo cameras to compute depth
+ */
+bool isDepthStereo(const qi::SessionPtr &session) {
+ std::vector<std::string> sensor_names;
+
+ try {
+   qi::AnyObject p_motion = session->service("ALMotion");
+   sensor_names = p_motion.call<std::vector<std::string> >("getSensorNames");
+
+   if (std::find(sensor_names.begin(),
+                 sensor_names.end(),
+                 "CameraStereo") != sensor_names.end()) {
+     return true;
+   }
+
+   else {
+     return false;
+   }
+
+ } catch (const std::exception &e) {
+   std::cerr << e.what() << std::endl;
+   return false;
+ }
 }
 
 } // driver
